@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GAIT REFERENCE LAB - track the reference, fight the execution gap</title>
+<meta name="description" content="A 2D biped tracks a reference walking gait through a noisy PD actuator model. RL-style reward tracking, live error charts, falls included.">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#0b0d10;color:#dfe7ee;font-family:'JetBrains Mono',monospace;overflow:hidden}
+  #wrap{display:flex;height:100%}
+  #stage{flex:1;position:relative;min-width:0}
+  canvas{display:block;width:100%;height:100%}
+  #side{width:300px;background:#10141a;border-left:1px solid rgba(255,255,255,.08);padding:12px 14px;overflow-y:auto;box-sizing:border-box}
+  h1{font-size:13px;margin:0 0 2px;letter-spacing:.5px}
+  .sub{font-size:10px;color:#7d8a97;margin-bottom:12px;line-height:1.5}
+  .grp{margin-bottom:5px}
+  .grp label{display:flex;justify-content:space-between;font-size:11px;color:#9fb0bd;margin-bottom:4px}
+  .grp input[type=range]{width:100%;accent-color:#3b82f6}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  button{flex:1;background:#1b2129;color:#dfe7ee;border:1px solid rgba(255,255,255,.12);border-radius:8px;font:11px 'JetBrains Mono',monospace;padding:8px;cursor:pointer}
+  button:hover{background:#242d38}
+  #stats{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.stat{display:flex;justify-content:space-between;font-size:10px;padding:2px 0;color:#9fb0bd}
+  .stat b{color:#e8edf2}
+  #rewardCv,#errCv{width:100%;background:#0b0d10;border:1px solid rgba(255,255,255,.07);border-radius:6px}
+  .cap{font-size:10px;color:#7d8a97;margin:5px 0 3px}
+  .fall{color:#f87171;font-weight:700}
+  .ok{color:#4ade80}
+  #legend{position:absolute;top:12px;left:12px;font-size:11px;background:rgba(10,12,16,.7);padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);line-height:1.7}
+  .sw{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:7px;border-radius:2px}
+  #quote{position:absolute;bottom:12px;left:12px;font-size:10px;color:#5f6c78;max-width:46%;line-height:1.5}
+  @media(max-width:820px){#wrap{flex-direction:column}#side{width:100%;border-left:none;border-top:1px solid rgba(255,255,255,.08);height:45%}#quote{display:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="legend">
+      <div><span class="sw" style="background:#3b82f6"></span>reference trajectory</div>
+      <div><span class="sw" style="background:#e8edf2"></span>executed (PD + actuator model)</div>
+      <div id="stateLine" style="margin-top:4px" class="ok">TRACKING</div>
+    </div>
+    <div id="quote">"you could probably use RL on this as a reference trajectory" - C. Paxton, on a humanoid writing Fibonacci by hand. 2D kinematic skeleton + actuator lag/noise/saturation model. Not a dynamics sim. No robots harmed.</div>
+  </div>
+  <div id="side">
+    <h1>GAIT REFERENCE LAB</h1>
+    <div class="sub">The ghost walks perfectly. Your controller has to keep up. Execution is an issue.</div>
+    <div class="grp"><label>stiffness kp <span id="kpV"></span></label><input type="range" id="kp" min="10" max="400" value="140"></div>
+    <div class="grp"><label>damping kd <span id="kdV"></span></label><input type="range" id="kd" min="0" max="40" value="12"></div>
+    <div class="grp"><label>actuator noise <span id="noV"></span></label><input type="range" id="noise" min="0" max="100" value="18"></div>
+    <div class="grp"><label>torque limit <span id="tqV"></span></label><input type="range" id="torque" min="10" max="100" value="80"></div>
+    <div class="grp"><label>playback <span id="spV"></span></label><input type="range" id="speed" min="25" max="200" value="100"></div>
+    <div class="row"><button id="newGait">NEW REFERENCE</button><button id="shove">DISTURBANCE</button></div>
+    <div id="stats"><div class="stat"><span>episode</span><b id="ep">1</b></div>
+    <div class="stat"><span>episode reward</span><b id="rew">0</b></div>
+    <div class="stat"><span>best episode</span><b id="best">-</b></div>
+    <div class="stat"><span>mean joint error</span><b id="err">0.0 deg</b></div></div>
+    <div class="cap">reward per episode (the RL curve you would train)</div>
+    <canvas id="rewardCv" width="292" height="90"></canvas>
+    <div class="cap">per-joint tracking error, live</div>
+    <canvas id="errCv" width="292" height="110"></canvas>
+  </div>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>
